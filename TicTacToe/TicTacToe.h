@@ -36,9 +36,9 @@ public:
     TicTacToe& operator=(const TicTacToe& other);
 
     /**
-     * @brief Виртуальный деструктор.
+     * @brief Деструктор.
      */
-    virtual ~TicTacToe();
+    ~TicTacToe();
 
     /**
      * @brief Установка хода игрока.
@@ -121,3 +121,4 @@ private:
 };
 
 #endif // TICTACTOE_H
+
