@@ -92,6 +92,11 @@ public:
     bool operator!=(const TicTacToe& other) const;
 
     /**
+     * @brief Копирование игрового поля.
+     * @param other Игра, из которой копируется поле.
+     */
+    void copyBoard(const TicTacToe& other);
+    /**
      * @brief Оператор вывода в поток.
      * @param os Поток вывода.
      * @param game Игра для вывода.
@@ -113,12 +118,8 @@ private:
     bool gameWon = false; ///< Флаг победы
     bool isValidMove(int x, int y) const; ///< Проверка корректности хода
 
-    /**
-     * @brief Копирование игрового поля.
-     * @param other Игра, из которой копируется поле.
-     */
-    void copyBoard(const TicTacToe& other);
 };
 
 #endif // TICTACTOE_H
+
 
