@@ -156,16 +156,17 @@ public:
      * @return Ссылка на текущий объект после деления.
      */
     Polynomial& operator/=(const Polynomial& other);
-
-private:
-    std::vector<double> coefficients; ///< Коэффициенты многочлена, индекс — степень переменной.
-    static constexpr double EPSILON = 1e-10; ///< Погрешность для сравнения коэффициентов.
     
     /**
      * @brief Получение степени многочлена.
      * @return Максимальная степень с ненулевым коэффициентом.
      */
     int getDegree() const;
+private:
+    std::vector<double> coefficients; ///< Коэффициенты многочлена, индекс — степень переменной.
+    static constexpr double EPSILON = 1e-10; ///< Погрешность для сравнения коэффициентов.
+
 };
 
 #endif // POLYNOMIAL_H
+
