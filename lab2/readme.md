@@ -50,6 +50,9 @@
 | 48 | MusicDiscovery          | 8    | 3      |                                                  |
 | 49 | MoodAnalyzer            | 7    | 3      |                                                  |
 | 50 | PlaylistGenerator       | 8    | 3      |                                                  |
+ 
+ 
+ 
  Итоговые подсчёты
 
     Всего классов: 50 (+12 исключений = 62)
