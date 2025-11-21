@@ -51,5 +51,17 @@
 | 49 | Drink              | 6    | 5      | 1-> NutritionInfo                    |
 | 50 | Dessert            | 6    | 5      | 2-> NutritionInfo, Chef              |
 | 51 | KitchenSchedule    | 4    | 3      | 2-> CookingTask, Chef                |
-| 52 | Utensil            | 4    | 5      | -> KitchenStation                   |
-| 53 | Appliance          | 5    | 5      | -> KitchenStation                   |
+| 52 | Utensil            | 4    | 5      | 1-> KitchenStation                   |
+| 53 | Appliance          | 5    | 5      | 1-> KitchenStation                   |
+
+
+
+Итоговые подсчёты: 
+
+    Всего классов: 53 (+13 исключений = 66)
+
+    Всего полей: 202
+
+    Всего методов: 256
+
+    Всего ассоциаций: 61
