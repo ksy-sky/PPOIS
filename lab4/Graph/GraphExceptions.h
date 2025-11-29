@@ -4,24 +4,29 @@
 
 namespace dg {
 
-struct graph_error : std::runtime_error {
+class graph_error : public std::runtime_error {
+public:
     explicit graph_error(const std::string& msg) : std::runtime_error(msg) {}
 };
 
-struct vertex_not_found : graph_error {
+class vertex_not_found : public graph_error {
+public:
     explicit vertex_not_found(const std::string& msg) : graph_error(msg) {}
 };
 
-struct edge_not_found : graph_error {
+class edge_not_found : public graph_error {
+public:
     explicit edge_not_found(const std::string& msg) : graph_error(msg) {}
 };
 
-struct duplicate_vertex : graph_error {
+class duplicate_vertex : public graph_error {
+public:
     explicit duplicate_vertex(const std::string& msg) : graph_error(msg) {}
 };
 
-struct duplicate_edge : graph_error {
+class duplicate_edge : public graph_error {
+public:
     explicit duplicate_edge(const std::string& msg) : graph_error(msg) {}
 };
 
-} // namespace dg
+} 
