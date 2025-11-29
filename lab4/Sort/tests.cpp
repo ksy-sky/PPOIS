@@ -1,70 +1,68 @@
 #include <UnitTest++/UnitTest++.h>
 #include <vector>
-#include <deque>
-#include <list>
 #include <iostream>
-#include "MergeSort.h"
-#include "BozoSort.h"
+#include "MergeSorter.h"
+#include "BozoSorter.h"
 #include "Smartphone.h"
 #include "Car.h"
 
 TEST(MergeSort_Int_Vector_Simple) {
     std::vector<int> numbers = {5, 2, 8, 1, 9, 3};
     std::vector<int> expected = {1, 2, 3, 5, 8, 9};
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
 TEST(MergeSort_Int_Vector_Reverse) {
     std::vector<int> numbers = {5, 4, 3, 2, 1};
     std::vector<int> expected = {1, 2, 3, 4, 5};
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
 TEST(MergeSort_Int_Vector_Duplicates) {
     std::vector<int> numbers = {3, 1, 4, 1, 5, 9, 2, 6, 5};
     std::vector<int> expected = {1, 1, 2, 3, 4, 5, 5, 6, 9};
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
 TEST(MergeSort_Int_Vector_Negative) {
     std::vector<int> numbers = {-3, -1, -4, -1, -5};
     std::vector<int> expected = {-5, -4, -3, -1, -1};
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
 TEST(MergeSort_Int_Vector_Mixed) {
     std::vector<int> numbers = {-2, 5, -1, 0, 3, -4};
     std::vector<int> expected = {-4, -2, -1, 0, 3, 5};
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
 TEST(MergeSort_Double_Vector) {
     std::vector<double> numbers = {5.5, 2.2, 8.8, 1.1, 9.9};
     std::vector<double> expected = {1.1, 2.2, 5.5, 8.8, 9.9};
-    merge_sort(numbers);
+    MergeSorter<double> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
 TEST(MergeSort_String_Vector) {
     std::vector<std::string> words = {"banana", "apple", "cherry", "date"};
     std::vector<std::string> expected = {"apple", "banana", "cherry", "date"};
-    merge_sort(words);
+    MergeSorter<std::string> sorter;
+    sorter.sort(words);
     CHECK_ARRAY_EQUAL(expected.data(), words.data(), words.size());
 }
 
-TEST(MergeSort_List) {
-    std::list<int> numbers = {5, 2, 8, 1, 9};
-    std::list<int> expected = {1, 2, 5, 8, 9};
-    merge_sort(numbers);
-    CHECK(std::equal(numbers.begin(), numbers.end(), expected.begin()));
-}
 
-// Новые тесты для Smartphone
 TEST(MergeSort_Smartphone_Multiple) {
     std::vector<Smartphone> phones = {
         Smartphone("Samsung", "Galaxy S23", 2023, 6.1, 256),
@@ -73,7 +71,8 @@ TEST(MergeSort_Smartphone_Multiple) {
         Smartphone("OnePlus", "8 Pro", 2020, 6.78, 256)
     };
     
-    merge_sort(phones);
+    MergeSorter<Smartphone> sorter;
+    sorter.sort(phones);
     
     CHECK_EQUAL(2020, phones[0].releaseYear);
     CHECK_EQUAL(2020, phones[1].releaseYear);
@@ -88,10 +87,10 @@ TEST(MergeSort_Smartphone_Same_Year) {
         Smartphone("Oppo", "Find X3", 2021, 6.7, 256)
     };
     
-    merge_sort(phones);
+    MergeSorter<Smartphone> sorter;
+    sorter.sort(phones);
     CHECK(std::is_sorted(phones.begin(), phones.end()));
 }
-
 
 TEST(MergeSort_Car_Multiple) {
     std::vector<Car> cars = {
@@ -101,7 +100,8 @@ TEST(MergeSort_Car_Multiple) {
         Car("Honda", "Civic", 2015, 1.5)
     };
     
-    merge_sort(cars);
+    MergeSorter<Car> sorter;
+    sorter.sort(cars);
     
     CHECK_EQUAL(1965, cars[0].year);
     CHECK_EQUAL(2015, cars[1].year);
@@ -116,44 +116,52 @@ TEST(MergeSort_Car_Same_Year) {
         Car("Nissan", "Altima", 2020, 2.5)
     };
     
-    merge_sort(cars);
+    MergeSorter<Car> sorter;
+    sorter.sort(cars);
     CHECK(std::is_sorted(cars.begin(), cars.end()));
 }
 
 TEST(BozoSort_Int_Vector_Simple) {
     std::vector<int> numbers = {3, 1, 2};
-    bozo_sort(numbers);
+    BozoSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
 }
 
 TEST(BozoSort_Int_Vector_Four_Elements) {
     std::vector<int> numbers = {4, 2, 1, 3};
-    bozo_sort(numbers);
+    BozoSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
 }
 
 TEST(BozoSort_Int_Vector_Duplicates) {
     std::vector<int> numbers = {2, 1, 2, 1, 3};
-    bozo_sort(numbers);
+    BozoSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
 }
 
 TEST(BozoSort_Double_Vector) {
     std::vector<double> numbers = {3.3, 1.1, 2.2};
-    bozo_sort(numbers);
+    BozoSorter<double> sorter;
+    sorter.sort(numbers);
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
 }
 
 TEST(BozoSort_String_Vector) {
     std::vector<std::string> words = {"cherry", "apple", "banana"};
-    bozo_sort(words);
+    BozoSorter<std::string> sorter;
+    sorter.sort(words);
     CHECK(std::is_sorted(words.begin(), words.end()));
 }
 
 TEST(Single_Element_Smartphone) {
     std::vector<Smartphone> single = {Smartphone("Google", "Pixel 7", 2022, 6.3, 128)};
-    merge_sort(single);
-    bozo_sort(single);
+    MergeSorter<Smartphone> merge_sorter;
+    merge_sorter.sort(single);
+    BozoSorter<Smartphone> bozo_sorter;
+    bozo_sorter.sort(single);
     CHECK_EQUAL(1, single.size());
     CHECK_EQUAL(2022, single[0].releaseYear);
 }
@@ -165,7 +173,8 @@ TEST(BozoSort_Smartphone_Vector) {
         Smartphone("Google", "Pixel 6", 2021, 6.4, 128)
     };
     
-    bozo_sort(phones);
+    BozoSorter<Smartphone> sorter;
+    sorter.sort(phones);
     CHECK(std::is_sorted(phones.begin(), phones.end()));
 }
 
@@ -176,36 +185,37 @@ TEST(BozoSort_Car_Vector) {
         Car("BMW", "X5", 2022, 3.0)
     };
     
-    bozo_sort(cars);
+    BozoSorter<Car> sorter;
+    sorter.sort(cars);
     CHECK(std::is_sorted(cars.begin(), cars.end()));
 }
 
-TEST(BozoSort_Deque) {
-    std::deque<int> numbers = {3, 1, 2};
-    bozo_sort(numbers);
-    CHECK(std::is_sorted(numbers.begin(), numbers.end()));
-}
 
 TEST(Empty_Vector) {
     std::vector<int> empty;
-    merge_sort(empty);
-    bozo_sort(empty);
+    MergeSorter<int> merge_sorter;
+    merge_sorter.sort(empty);
+    BozoSorter<int> bozo_sorter;
+    bozo_sorter.sort(empty);
     CHECK(empty.empty());
 }
 
 TEST(Single_Element_Vector) {
     std::vector<int> single = {42};
-    merge_sort(single);
-    bozo_sort(single);
+    MergeSorter<int> merge_sorter;
+    merge_sorter.sort(single);
+    BozoSorter<int> bozo_sorter;
+    bozo_sorter.sort(single);
     CHECK_EQUAL(1, single.size());
     CHECK_EQUAL(42, single[0]);
 }
 
-
 TEST(Single_Element_Car) {
     std::vector<Car> single = {Car("Toyota", "Camry", 2020, 2.5)};
-    merge_sort(single);
-    bozo_sort(single);
+    MergeSorter<Car> merge_sorter;
+    merge_sorter.sort(single);
+    BozoSorter<Car> bozo_sorter;
+    bozo_sorter.sort(single);
     CHECK_EQUAL(1, single.size());
     CHECK_EQUAL(2020, single[0].year);
 }
@@ -213,28 +223,32 @@ TEST(Single_Element_Car) {
 TEST(Already_Sorted_Ascending) {
     std::vector<int> sorted = {1, 2, 3, 4, 5};
     std::vector<int> expected = {1, 2, 3, 4, 5};
-    merge_sort(sorted);
+    MergeSorter<int> sorter;
+    sorter.sort(sorted);
     CHECK_ARRAY_EQUAL(expected.data(), sorted.data(), sorted.size());
 }
 
 TEST(Already_Sorted_Descending) {
     std::vector<int> sorted = {5, 4, 3, 2, 1};
     std::vector<int> expected = {1, 2, 3, 4, 5};
-    merge_sort(sorted);
+    MergeSorter<int> sorter;
+    sorter.sort(sorted);
     CHECK_ARRAY_EQUAL(expected.data(), sorted.data(), sorted.size());
 }
 
 TEST(Two_Elements_Unsorted) {
     std::vector<int> numbers = {2, 1};
     std::vector<int> expected = {1, 2};
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
 TEST(Two_Elements_Sorted) {
     std::vector<int> numbers = {1, 2};
     std::vector<int> expected = {1, 2};
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
@@ -244,17 +258,18 @@ TEST(MergeSort_Large_Vector) {
         numbers.push_back(i);
     }
     
-    merge_sort(numbers);
+    MergeSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
 }
 
 TEST(BozoSort_Small_Vector) {
     std::vector<int> numbers = {5, 2, 3, 1, 4};
-    bozo_sort(numbers);
+    BozoSorter<int> sorter;
+    sorter.sort(numbers);
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
 }
 
 int main() {
-
     return UnitTest::RunAllTests();
 }
