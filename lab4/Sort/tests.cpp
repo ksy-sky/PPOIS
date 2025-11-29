@@ -8,7 +8,6 @@
 #include "Smartphone.h"
 #include "Car.h"
 
-// Тесты для MergeSort
 TEST(MergeSort_Int_Vector_Simple) {
     std::vector<int> numbers = {5, 2, 8, 1, 9, 3};
     std::vector<int> expected = {1, 2, 3, 5, 8, 9};
@@ -94,7 +93,6 @@ TEST(MergeSort_Smartphone_Same_Year) {
 }
 
 
-// Тесты для Car
 TEST(MergeSort_Car_Multiple) {
     std::vector<Car> cars = {
         Car("Tesla", "Model S", 2023, 0.0),
@@ -122,7 +120,6 @@ TEST(MergeSort_Car_Same_Year) {
     CHECK(std::is_sorted(cars.begin(), cars.end()));
 }
 
-// Тесты для BozoSort
 TEST(BozoSort_Int_Vector_Simple) {
     std::vector<int> numbers = {3, 1, 2};
     bozo_sort(numbers);
@@ -189,7 +186,6 @@ TEST(BozoSort_Deque) {
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
 }
 
-// Граничные случаи
 TEST(Empty_Vector) {
     std::vector<int> empty;
     merge_sort(empty);
@@ -242,7 +238,6 @@ TEST(Two_Elements_Sorted) {
     CHECK_ARRAY_EQUAL(expected.data(), numbers.data(), numbers.size());
 }
 
-// Большие тесты (для проверки производительности)
 TEST(MergeSort_Large_Vector) {
     std::vector<int> numbers;
     for (int i = 100; i > 0; --i) {
@@ -254,7 +249,6 @@ TEST(MergeSort_Large_Vector) {
 }
 
 TEST(BozoSort_Small_Vector) {
-    // BozoSort только для маленьких массивов
     std::vector<int> numbers = {5, 2, 3, 1, 4};
     bozo_sort(numbers);
     CHECK(std::is_sorted(numbers.begin(), numbers.end()));
