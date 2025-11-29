@@ -1,561 +1,855 @@
 #include <UnitTest++/UnitTest++.h>
-#include <vector>
-#include <algorithm>
 #include <sstream>
-#include <iostream>
+#include <algorithm>
 #include "Graph.h"
 #include "GraphExceptions.h"
-#include "GraphTestTypes.h"
+#include "City.h"
+#include "Course.h"
 
-using namespace dg;
-
-SUITE(GraphConstructionTests) {
-    TEST(DefaultConstructorCreatesEmptyGraph) {
-        Graph<int> g;
-        CHECK_EQUAL(0, g.vertex_count());
-        CHECK_EQUAL(0, g.edge_count());
+SUITE(GraphCoreTests) {
+    TEST(DefaultConstructorAndTypedefs) {
+        dg::Graph<int> graph;
+        
+        CHECK(typeid(typename dg::Graph<int>::value_type) == typeid(int));
+        CHECK(typeid(typename dg::Graph<int>::reference) == typeid(int&));
+        CHECK(typeid(typename dg::Graph<int>::const_reference) == typeid(const int&));
+        CHECK(typeid(typename dg::Graph<int>::pointer) == typeid(int*));
+        CHECK(typeid(typename dg::Graph<int>::const_pointer) == typeid(const int*));
+        CHECK(typeid(typename dg::Graph<int>::size_type) == typeid(std::size_t));
+        
+        CHECK(graph.empty());
+        CHECK_EQUAL(0, graph.vertex_count());
+        CHECK_EQUAL(0, graph.edge_count());
     }
 
-    TEST(CopyConstructor) {
-        Graph<int> g1;
-        auto v1 = g1.add_vertex(1);
-        auto v2 = g1.add_vertex(2);
-        g1.add_edge(v1, v2);
+    TEST(EmptyMethod) {
+        dg::Graph<int> graph;
+        CHECK(graph.empty());
         
-        Graph<int> g2 = g1;
+        graph.add_vertex(10);
+        CHECK(!graph.empty());
         
-        CHECK_EQUAL(g1.vertex_count(), g2.vertex_count());
-        CHECK_EQUAL(g1.edge_count(), g2.edge_count());
-        CHECK(g2.contains_vertex(v1));
-        CHECK(g2.contains_vertex(v2));
-        CHECK(g2.contains_edge(v1, v2));
-    }
-
-    TEST(AssignmentOperator) {
-        Graph<int> g1, g2;
-        auto v1 = g1.add_vertex(1);
-        auto v2 = g1.add_vertex(2);
-        g1.add_edge(v1, v2);
+        graph.remove_vertex(0);
+        CHECK(!graph.empty());
         
-        g2 = g1;
-        
-        CHECK_EQUAL(g1.vertex_count(), g2.vertex_count());
-        CHECK_EQUAL(g1.edge_count(), g2.edge_count());
-        CHECK(g2.contains_edge(v1, v2));
-    }
-
-    TEST(SelfAssignment) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        g.add_edge(v1, v2);
-        
-        g = g;
-        
-        CHECK_EQUAL(2, g.vertex_count());
-        CHECK_EQUAL(1, g.edge_count());
-        CHECK(g.contains_edge(v1, v2));
+        graph.clear();
+        CHECK(graph.empty());
     }
 }
 
-SUITE(VertexOperationTests) {
-    TEST(AddVertexReturnsSequentialIds) {
-        Graph<std::string> g;
-        auto id1 = g.add_vertex("first");
-        auto id2 = g.add_vertex("second");
-        auto id3 = g.add_vertex("third");
+SUITE(VertexOperationsTests) {
+    TEST(AddVertex) {
+        dg::Graph<int> graph;
         
+        auto id1 = graph.add_vertex(10);
         CHECK_EQUAL(0, id1);
+        CHECK_EQUAL(1, graph.vertex_count());
+        CHECK(graph.contains_vertex(0));
+        
+        auto id2 = graph.add_vertex(20);
         CHECK_EQUAL(1, id2);
-        CHECK_EQUAL(2, id3);
-        CHECK_EQUAL(3, g.vertex_count());
+        CHECK_EQUAL(2, graph.vertex_count());
+        CHECK(graph.contains_vertex(1));
+        
+        auto it = graph.vertices_begin();
+        CHECK_EQUAL(10, (*it).second);
+        ++it;
+        CHECK_EQUAL(20, (*it).second);
+    }
+
+    TEST(AddVertexWithCustomType) {
+        dg::Graph<City> graph;
+        
+        auto id1 = graph.add_vertex(City("Moscow", 12000000));
+        CHECK_EQUAL(0, id1);
+        CHECK(graph.contains_vertex(0));
+        
+        auto id2 = graph.add_vertex(City("London", 9000000));
+        CHECK_EQUAL(1, id2);
+        
+        auto it = graph.vertices_begin();
+        CHECK_EQUAL("Moscow", (*it).second.name);
+        CHECK_EQUAL(12000000, (*it).second.population);
     }
 
     TEST(ContainsVertex) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
         
-        CHECK(g.contains_vertex(v1));
-        CHECK(g.contains_vertex(v2));
-        CHECK(!g.contains_vertex(999));
+        CHECK(graph.contains_vertex(0));
+        CHECK(graph.contains_vertex(1));
+        CHECK(!graph.contains_vertex(2));
+        CHECK(!graph.contains_vertex(100));
+        
+        graph.remove_vertex(0);
+        CHECK(!graph.contains_vertex(0));
+        CHECK(graph.contains_vertex(1));
     }
 
-    TEST(AddMultipleVertices) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
+    TEST(RemoveVertex) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        graph.add_edge(2, 0);
         
-        CHECK_EQUAL(3, g.vertex_count());
-        CHECK(g.contains_vertex(v1));
-        CHECK(g.contains_vertex(v2));
-        CHECK(g.contains_vertex(v3));
+        CHECK_EQUAL(3, graph.vertex_count());
+        CHECK_EQUAL(3, graph.edge_count());
+        
+        graph.remove_vertex(1);
+        
+        CHECK_EQUAL(3, graph.vertex_count());
+        CHECK(!graph.contains_vertex(1));
+        CHECK_EQUAL(1, graph.edge_count());
+        CHECK(graph.contains_edge(2, 0));
+        CHECK(!graph.contains_edge(0, 1));
+        CHECK(!graph.contains_edge(1, 2));
     }
 
-    TEST(ClearRemovesAllVerticesAndEdges) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        g.add_edge(v1, v2);
+    TEST(RemoveVertexByIterator) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
         
-        g.clear();
+        auto it = graph.vertices_begin();
+        ++it;
         
-        CHECK_EQUAL(0, g.vertex_count());
-        CHECK_EQUAL(0, g.edge_count());
-        CHECK(!g.contains_vertex(v1));
-        CHECK(!g.contains_vertex(v2));
+        auto next_it = graph.remove_vertex(it);
+        CHECK_EQUAL(2, (*next_it).first);
+        CHECK(!graph.contains_vertex(1));
+        CHECK_EQUAL(0, graph.edge_count());
     }
 
-    TEST(VertexValuesAreStoredCorrectly) {
-        Graph<std::string> g;
-        auto v1 = g.add_vertex("hello");
-        auto v2 = g.add_vertex("world");
+    TEST(RemoveVertexNotFound) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
         
-        std::vector<std::string> values;
-        for (auto it = g.vertices_begin(); it != g.vertices_end(); ++it) {
-            values.push_back(*(*it).value);
-        }
+        CHECK_THROW(graph.remove_vertex(1), dg::vertex_not_found);
+    }
+
+    TEST(RemoveLastVertexByIterator) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
         
-        CHECK_EQUAL(2, values.size());
-        CHECK(std::find(values.begin(), values.end(), "hello") != values.end());
-        CHECK(std::find(values.begin(), values.end(), "world") != values.end());
+        auto it = graph.vertices_begin();
+        auto result = graph.remove_vertex(it);
+        CHECK(result == graph.vertices_end());
+        CHECK(!graph.contains_vertex(0));
     }
 }
 
-SUITE(EdgeOperationTests) {
+SUITE(EdgeOperationsTests) {
     TEST(AddEdge) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
         
-        g.add_edge(v1, v2);
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
         
-        CHECK_EQUAL(1, g.edge_count());
-        CHECK(g.contains_edge(v1, v2));
-        CHECK(!g.contains_edge(v2, v1));
+        CHECK(graph.contains_edge(0, 1));
+        CHECK(graph.contains_edge(1, 2));
+        CHECK(!graph.contains_edge(0, 2));
+        CHECK_EQUAL(2, graph.edge_count());
     }
 
-    TEST(AddMultipleEdges) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
+    TEST(AddEdgeVertexNotFound) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
         
-        g.add_edge(v1, v2);
-        g.add_edge(v2, v3);
-        g.add_edge(v3, v1);
+        CHECK_THROW(graph.add_edge(0, 1), dg::vertex_not_found);
+        CHECK_THROW(graph.add_edge(1, 0), dg::vertex_not_found);
+        CHECK_THROW(graph.add_edge(1, 2), dg::vertex_not_found);
+    }
+
+    TEST(AddDuplicateEdge) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_edge(0, 1);
         
-        CHECK_EQUAL(3, g.edge_count());
-        CHECK(g.contains_edge(v1, v2));
-        CHECK(g.contains_edge(v2, v3));
-        CHECK(g.contains_edge(v3, v1));
+        CHECK_THROW(graph.add_edge(0, 1), dg::duplicate_edge);
+    }
+
+    TEST(AddSelfLoop) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        
+        graph.add_edge(0, 0);
+        CHECK(graph.contains_edge(0, 0));
+        CHECK_EQUAL(1, graph.edge_count());
+        CHECK_EQUAL(1, graph.degree_vertex(0));
     }
 
     TEST(ContainsEdge) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_edge(0, 1);
         
-        CHECK(!g.contains_edge(v1, v2));
-        g.add_edge(v1, v2);
-        CHECK(g.contains_edge(v1, v2));
-        CHECK(!g.contains_edge(v2, v1));
+        CHECK(graph.contains_edge(0, 1));
+        CHECK(!graph.contains_edge(1, 0));
+        CHECK(!graph.contains_edge(0, 2));
+        CHECK(!graph.contains_edge(2, 1));
+        
+        CHECK(!graph.contains_edge(0, 5));
+        CHECK(!graph.contains_edge(5, 0));
+        CHECK(!graph.contains_edge(5, 6));
     }
 
-    TEST(EdgeCountAccuracy) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
+    TEST(RemoveEdge) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        graph.add_edge(0, 2);
         
-        CHECK_EQUAL(0, g.edge_count());
-        g.add_edge(v1, v2);
-        CHECK_EQUAL(1, g.edge_count());
-        g.add_edge(v2, v3);
-        CHECK_EQUAL(2, g.edge_count());
-        g.add_edge(v3, v1);
-        CHECK_EQUAL(3, g.edge_count());
+        CHECK_EQUAL(3, graph.edge_count());
+        
+        graph.remove_edge(0, 1);
+        CHECK_EQUAL(2, graph.edge_count());
+        CHECK(!graph.contains_edge(0, 1));
+        CHECK(graph.contains_edge(1, 2));
+        CHECK(graph.contains_edge(0, 2));
+        
+        graph.remove_edge(1, 2);
+        CHECK_EQUAL(1, graph.edge_count());
+        CHECK(graph.contains_edge(0, 2));
     }
 
-    TEST(CycleCreation) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
+    TEST(RemoveEdgeByPair) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_edge(0, 1);
         
-        g.add_edge(v1, v2);
-        g.add_edge(v2, v3);
-        g.add_edge(v3, v1);
+        graph.remove_edge(std::make_pair(0, 1));
+        CHECK(!graph.contains_edge(0, 1));
+        CHECK_EQUAL(0, graph.edge_count());
+    }
+
+    TEST(RemoveEdgeByIterator) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
         
-        CHECK_EQUAL(3, g.edge_count());
-        CHECK(g.contains_edge(v1, v2));
-        CHECK(g.contains_edge(v2, v3));
-        CHECK(g.contains_edge(v3, v1));
+        auto it = graph.edges_begin();
+        auto next_it = graph.remove_edge(it);
+        
+        CHECK_EQUAL(1, graph.edge_count());
+        CHECK(!graph.contains_edge(0, 1));
+        CHECK(graph.contains_edge(1, 2));
+        CHECK_EQUAL(1, (*next_it).first);
+        CHECK_EQUAL(2, (*next_it).second);
+    }
+
+    TEST(RemoveLastEdgeByIterator) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_edge(0, 1);
+        
+        auto it = graph.edges_begin();
+        auto result = graph.remove_edge(it);
+        CHECK(result == graph.edges_end());
+        CHECK_EQUAL(0, graph.edge_count());
+    }
+
+    TEST(RemoveNonExistentEdge) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        
+        graph.remove_edge(0, 1);
+        graph.remove_edge(1, 0);
+        graph.remove_edge(std::make_pair(0, 1));
+    }
+}
+
+SUITE(DegreeTests) {
+    TEST(DegreeVertex) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_vertex(40);
+        
+        graph.add_edge(0, 1);
+        graph.add_edge(0, 2);
+        graph.add_edge(1, 3);
+        graph.add_edge(2, 3);
+        
+        CHECK_EQUAL(2, graph.degree_vertex(0));
+        CHECK_EQUAL(1, graph.degree_vertex(1));
+        CHECK_EQUAL(1, graph.degree_vertex(2));
+        CHECK_EQUAL(0, graph.degree_vertex(3));
+        
+        graph.add_edge(3, 3);
+        CHECK_EQUAL(1, graph.degree_vertex(3));
+    }
+
+    TEST(InDegree) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        
+        graph.add_edge(0, 1);
+        graph.add_edge(0, 2);
+        graph.add_edge(1, 2);
+        
+        CHECK_EQUAL(0, graph.in_degree(0));
+        CHECK_EQUAL(1, graph.in_degree(1));
+        CHECK_EQUAL(2, graph.in_degree(2));
+        
+        graph.add_edge(2, 2);
+        CHECK_EQUAL(3, graph.in_degree(2));
+    }
+
+    TEST(OutDegree) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        
+        graph.add_edge(0, 1);
+        graph.add_edge(0, 2);
+        graph.add_edge(1, 2);
+        
+        CHECK_EQUAL(2, graph.out_degree(0));
+        CHECK_EQUAL(1, graph.out_degree(1));
+        CHECK_EQUAL(0, graph.out_degree(2));
+        
+        graph.add_edge(2, 2);
+        CHECK_EQUAL(1, graph.out_degree(2));
+    }
+
+    TEST(DegreeVertexNotFound) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        
+        CHECK_THROW(graph.degree_vertex(1), dg::vertex_not_found);
+        CHECK_THROW(graph.in_degree(1), dg::vertex_not_found);
+        CHECK_THROW(graph.out_degree(1), dg::vertex_not_found);
+    }
+
+    TEST(DegreeEdge) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        
+        CHECK_EQUAL(1, graph.degree_edge(0, 1));
+        CHECK_EQUAL(0, graph.degree_edge(1, 0));
+        CHECK_EQUAL(0, graph.degree_edge(0, 2));
+        CHECK_EQUAL(0, graph.degree_edge(2, 2));
     }
 }
 
 SUITE(IteratorTests) {
-    TEST(VertexIteratorBasic) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
+    TEST(VertexIterators) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
         
-        std::vector<size_t> ids;
-        for (auto it = g.vertices_begin(); it != g.vertices_end(); ++it) {
-            ids.push_back((*it).id);
-        }
-        
-        CHECK_EQUAL(3, ids.size());
-        CHECK(std::find(ids.begin(), ids.end(), v1) != ids.end());
-        CHECK(std::find(ids.begin(), ids.end(), v2) != ids.end());
-        CHECK(std::find(ids.begin(), ids.end(), v3) != ids.end());
-    }
-
-    TEST(VertexIteratorValues) {
-        Graph<std::string> g;
-        auto v1 = g.add_vertex("A");
-        auto v2 = g.add_vertex("B");
-        auto v3 = g.add_vertex("C");
-        
-        std::vector<std::string> values;
-        for (auto it = g.vertices_begin(); it != g.vertices_end(); ++it) {
-            values.push_back(*(*it).value);
+        std::vector<int> values;
+        for (auto it = graph.vertices_begin(); it != graph.vertices_end(); ++it) {
+            values.push_back((*it).second);
         }
         
         CHECK_EQUAL(3, values.size());
-        CHECK(std::find(values.begin(), values.end(), "A") != values.end());
-        CHECK(std::find(values.begin(), values.end(), "B") != values.end());
-        CHECK(std::find(values.begin(), values.end(), "C") != values.end());
-    }
-
-    TEST(ConstVertexIterator) {
-        Graph<int> g;
-        g.add_vertex(1);
-        g.add_vertex(2);
-        g.add_vertex(3);
+        CHECK_EQUAL(10, values[0]);
+        CHECK_EQUAL(20, values[1]);
+        CHECK_EQUAL(30, values[2]);
         
-        const Graph<int>& const_g = g;
-        int count = 0;
-        for (auto it = const_g.vertices_begin(); it != const_g.vertices_end(); ++it) {
-            CHECK((*it).value != nullptr);
-            count++;
+        const auto& const_graph = graph;
+        values.clear();
+        for (auto it = const_graph.vertices_begin(); it != const_graph.vertices_end(); ++it) {
+            values.push_back((*it).second);
         }
-        CHECK_EQUAL(3, count);
-    }
-
-    TEST(EdgeIteratorBasic) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
+        CHECK_EQUAL(3, values.size());
         
-        g.add_edge(v1, v2);
-        g.add_edge(v2, v3);
-        g.add_edge(v3, v1);
-        
-        std::vector<std::pair<size_t, size_t>> edges;
-        for (auto it = g.edges_begin(); it != g.edges_end(); ++it) {
-            edges.push_back(std::make_pair((*it).src, (*it).dst));
-        }
-        
-        CHECK_EQUAL(3, edges.size());
-        CHECK(std::find(edges.begin(), edges.end(), std::make_pair(v1, v2)) != edges.end());
-        CHECK(std::find(edges.begin(), edges.end(), std::make_pair(v2, v3)) != edges.end());
-        CHECK(std::find(edges.begin(), edges.end(), std::make_pair(v3, v1)) != edges.end());
-    }
-
-    TEST(ConstEdgeIterator) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        g.add_edge(v1, v2);
-        
-        const Graph<int>& const_g = g;
-        int count = 0;
-        for (auto it = const_g.edges_begin(); it != const_g.edges_end(); ++it) {
-            CHECK_EQUAL(v1, (*it).src);
-            CHECK_EQUAL(v2, (*it).dst);
-            count++;
-        }
-        CHECK_EQUAL(1, count);
-    }
-
-    TEST(EmptyGraphIterators) {
-        Graph<int> g;
-        
-        CHECK(g.vertices_begin() == g.vertices_end());
-        CHECK(g.edges_begin() == g.edges_end());
-        
-        const Graph<int>& const_g = g;
-        CHECK(const_g.vertices_begin() == const_g.vertices_end());
-        CHECK(const_g.edges_begin() == const_g.edges_end());
-    }
-
-    TEST(SingleVertexIterator) {
-        Graph<int> g;
-        g.add_vertex(42);
-        
-        int count = 0;
-        for (auto it = g.vertices_begin(); it != g.vertices_end(); ++it) {
-            CHECK_EQUAL(42, *(*it).value);
-            count++;
-        }
-        CHECK_EQUAL(1, count);
-    }
-
-    TEST(SingleEdgeIterator) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        g.add_edge(v1, v2);
-        
-        int count = 0;
-        for (auto it = g.edges_begin(); it != g.edges_end(); ++it) {
-            CHECK_EQUAL(v1, (*it).src);
-            CHECK_EQUAL(v2, (*it).dst);
-            count++;
-        }
-        CHECK_EQUAL(1, count);
-    }
-
-    TEST(BidirectionalVertexIterator) {
-        Graph<int> g;
-        g.add_vertex(1);
-        g.add_vertex(2);
-        
-        auto it = g.vertices_begin();
-        auto first_id = (*it).id;
+        auto it = graph.vertices_begin();
         ++it;
         --it;
-        
-        CHECK_EQUAL(first_id, (*it).id);
+        CHECK_EQUAL(0, (*it).first);
+        CHECK_EQUAL(10, (*it).second);
     }
 
-    TEST(BidirectionalEdgeIterator) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
-        g.add_edge(v1, v2);
-        g.add_edge(v2, v3);
+    TEST(ReverseVertexIterators) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
         
-        auto it = g.edges_begin();
-        auto first_edge = *it;
+        std::vector<int> values;
+        for (auto it = graph.vertices_rbegin(); it != graph.vertices_rend(); ++it) {
+            values.push_back((*it).second);
+        }
+        
+        CHECK_EQUAL(3, values.size());
+        CHECK_EQUAL(30, values[0]);
+        CHECK_EQUAL(20, values[1]);
+        CHECK_EQUAL(10, values[2]);
+        
+        const auto& const_graph = graph;
+        values.clear();
+        for (auto it = const_graph.vertices_rbegin(); it != const_graph.vertices_rend(); ++it) {
+            values.push_back((*it).second);
+        }
+        CHECK_EQUAL(3, values.size());
+        CHECK_EQUAL(30, values[0]);
+    }
+
+    TEST(EdgeIterators) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_vertex(40);
+        
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        graph.add_edge(2, 3);
+        graph.add_edge(3, 0);
+        
+        std::vector<std::pair<std::size_t, std::size_t>> edges;
+        for (auto it = graph.edges_begin(); it != graph.edges_end(); ++it) {
+            edges.push_back(*it);
+        }
+        
+        CHECK_EQUAL(4, edges.size());
+        CHECK_EQUAL(0, edges[0].first);
+        CHECK_EQUAL(1, edges[0].second);
+        
+        const auto& const_graph = graph;
+        edges.clear();
+        for (auto it = const_graph.edges_begin(); it != const_graph.edges_end(); ++it) {
+            edges.push_back(*it);
+        }
+        CHECK_EQUAL(4, edges.size());
+        
+        auto it = graph.edges_begin();
         ++it;
-        auto second_edge = *it;
         --it;
+        CHECK_EQUAL(0, (*it).first);
+        CHECK_EQUAL(1, (*it).second);
+    }
+
+    TEST(AdjacentVerticesIterators) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_vertex(40);
         
-        CHECK(first_edge.src == (*it).src && first_edge.dst == (*it).dst);
+        graph.add_edge(0, 1);
+        graph.add_edge(0, 2);
+        graph.add_edge(0, 3);
+        
+        std::vector<std::pair<std::size_t, int>> adjacent;
+        for (auto it = graph.adjacent_vertices_begin(0); it != graph.adjacent_vertices_end(0); ++it) {
+            adjacent.push_back(*it);
+        }
+        
+        CHECK_EQUAL(3, adjacent.size());
+        
+        std::vector<std::size_t> ids;
+        for (const auto& adj : adjacent) {
+            ids.push_back(adj.first);
+        }
+        std::sort(ids.begin(), ids.end());
+        CHECK_EQUAL(1, ids[0]);
+        CHECK_EQUAL(2, ids[1]);
+        CHECK_EQUAL(3, ids[2]);
+    }
+
+    TEST(EmptyIterators) {
+        dg::Graph<int> graph;
+        
+        CHECK(graph.vertices_begin() == graph.vertices_end());
+        CHECK(graph.edges_begin() == graph.edges_end());
+        CHECK(graph.vertices_rbegin() == graph.vertices_rend());
+        CHECK(graph.edges_rbegin() == graph.edges_rend());
+    }
+
+    TEST(SingleVertexIterators) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        
+        auto v_it = graph.vertices_begin();
+        CHECK(v_it != graph.vertices_end());
+        CHECK_EQUAL(0, (*v_it).first);
+        CHECK_EQUAL(10, (*v_it).second);
+        
+        ++v_it;
+        CHECK(v_it == graph.vertices_end());
+        
+        CHECK(graph.edges_begin() == graph.edges_end());
+        CHECK(graph.out_edges_begin(0) == graph.out_edges_end(0));
+        CHECK(graph.in_edges_begin(0) == graph.in_edges_end(0));
+        CHECK(graph.adjacent_vertices_begin(0) == graph.adjacent_vertices_end(0));
     }
 }
 
-SUITE(ExceptionTests) {
-    TEST(VertexNotFoundOnAddEdgeFirstVertex) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
+SUITE(CopyAndAssignmentTests) {
+    TEST(CopyConstructor) {
+        dg::Graph<int> original;
+        original.add_vertex(10);
+        original.add_vertex(20);
+        original.add_vertex(30);
+        original.add_edge(0, 1);
+        original.add_edge(1, 2);
         
-        CHECK_THROW(g.add_edge(999, v1), vertex_not_found);
+        dg::Graph<int> copy(original);
+        
+        CHECK_EQUAL(original.vertex_count(), copy.vertex_count());
+        CHECK_EQUAL(original.edge_count(), copy.edge_count());
+        
+        CHECK(copy.contains_vertex(0));
+        CHECK(copy.contains_vertex(1));
+        CHECK(copy.contains_vertex(2));
+        CHECK(copy.contains_edge(0, 1));
+        CHECK(copy.contains_edge(1, 2));
+        
+        original.remove_edge(0, 1);
+        CHECK(copy.contains_edge(0, 1));
     }
 
-    TEST(VertexNotFoundOnAddEdgeSecondVertex) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
+    TEST(CopyAssignment) {
+        dg::Graph<int> original;
+        original.add_vertex(10);
+        original.add_vertex(20);
+        original.add_edge(0, 1);
         
-        CHECK_THROW(g.add_edge(v1, 999), vertex_not_found);
+        dg::Graph<int> copy;
+        copy.add_vertex(100);
+        copy.add_vertex(200);
+        copy.add_vertex(300);
+        copy.add_edge(0, 1);
+        copy.add_edge(1, 2);
+        
+        copy = original;
+        
+        CHECK_EQUAL(original.vertex_count(), copy.vertex_count());
+        CHECK_EQUAL(original.edge_count(), copy.edge_count());
+        CHECK(copy.contains_vertex(0));
+        CHECK(copy.contains_vertex(1));
+        CHECK(copy.contains_edge(0, 1));
+        CHECK(!copy.contains_vertex(2));
+        
+        copy = copy;
+        CHECK_EQUAL(2, copy.vertex_count());
+        CHECK_EQUAL(1, copy.edge_count());
     }
 
-    TEST(VertexNotFoundOnAddEdgeBothVertices) {
-        Graph<int> g;
+    TEST(CopyAssignmentWithCustomType) {
+        dg::Graph<City> original;
+        original.add_vertex(City("Moscow", 12000000));
+        original.add_vertex(City("London", 9000000));
+        original.add_edge(0, 1);
         
-        CHECK_THROW(g.add_edge(999, 1000), vertex_not_found);
-    }
-
-    TEST(DuplicateEdge) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
+        dg::Graph<City> copy;
+        copy = original;
         
-        g.add_edge(v1, v2);
-        CHECK_THROW(g.add_edge(v1, v2), duplicate_edge);
-    }
-
-    TEST(ContainsVertexForNonExistent) {
-        Graph<int> g;
-        CHECK(!g.contains_vertex(999));
-    }
-
-    TEST(EdgeOperationsWithInvalidVertices) {
-        Graph<int> g;
-        auto v1 = g.add_vertex(1);
+        CHECK_EQUAL(2, copy.vertex_count());
+        CHECK_EQUAL(1, copy.edge_count());
         
-        CHECK(!g.contains_edge(999, v1));
-        CHECK(!g.contains_edge(v1, 999));
-        CHECK(!g.contains_edge(999, 1000));
-    }
-}
-
-SUITE(CustomTypeTests) {
-    TEST(CityGraph) {
-        Graph<City> g;
-        
-        auto nyc = g.add_vertex(City("New York", 8419000));
-        auto london = g.add_vertex(City("London", 8982000));
-        auto paris = g.add_vertex(City("Paris", 2148000));
-        auto tokyo = g.add_vertex(City("Tokyo", 13960000));
-        
-        g.add_edge(nyc, london);
-        g.add_edge(london, paris);
-        g.add_edge(paris, tokyo);
-        g.add_edge(tokyo, nyc);
-        
-        CHECK_EQUAL(4, g.vertex_count());
-        CHECK_EQUAL(4, g.edge_count());
-        
-        for (auto it = g.vertices_begin(); it != g.vertices_end(); ++it) {
-            CHECK((*it).value != nullptr);
-            CHECK(!(*it).value->name.empty());
-            CHECK((*it).value->population > 0);
-        }
-    }
-
-    TEST(CoursePrerequisites) {
-        Graph<Course> g;
-        
-        auto math101 = g.add_vertex(Course("Math 101", 3));
-        auto cs101 = g.add_vertex(Course("CS 101", 4));
-        auto cs201 = g.add_vertex(Course("CS 201", 4));
-        auto algorithms = g.add_vertex(Course("Algorithms", 5));
-        
-        g.add_edge(math101, cs101);
-        g.add_edge(cs101, cs201);
-        g.add_edge(cs201, algorithms);
-        
-        CHECK_EQUAL(4, g.vertex_count());
-        CHECK_EQUAL(3, g.edge_count());
-        CHECK(g.contains_edge(math101, cs101));
-        CHECK(g.contains_edge(cs101, cs201));
-        CHECK(g.contains_edge(cs201, algorithms));
-    }
-
-    TEST(CustomTypeCopy) {
-        Graph<City> g1;
-        auto v1 = g1.add_vertex(City("Moscow", 12500000));
-        auto v2 = g1.add_vertex(City("Berlin", 3645000));
-        g1.add_edge(v1, v2);
-        
-        Graph<City> g2 = g1;
-        
-        CHECK_EQUAL(g1.vertex_count(), g2.vertex_count());
-        CHECK_EQUAL(g1.edge_count(), g2.edge_count());
-        CHECK(g2.contains_edge(v1, v2));
+        auto it = copy.vertices_begin();
+        CHECK_EQUAL("Moscow", (*it).second.name);
+        ++it;
+        CHECK_EQUAL("London", (*it).second.name);
     }
 }
 
-SUITE(ComplexOperationTests) {
-    TEST(LargeGraph) {
-        Graph<int> g;
-        const size_t NUM_VERTICES = 100;
+SUITE(ComparisonTests) {
+    TEST(EqualityOperators) {
+        dg::Graph<int> graph1;
+        graph1.add_vertex(10);
+        graph1.add_vertex(20);
+        graph1.add_edge(0, 1);
         
-        std::vector<size_t> vertices;
-        for (int i = 0; i < NUM_VERTICES; ++i) {
-            vertices.push_back(g.add_vertex(i));
-        }
+        dg::Graph<int> graph2;
+        graph2.add_vertex(10);
+        graph2.add_vertex(20);
+        graph2.add_edge(0, 1);
         
-        for (size_t i = 0; i < NUM_VERTICES - 1; ++i) {
-            g.add_edge(vertices[i], vertices[i + 1]);
-        }
+        dg::Graph<int> graph3;
+        graph3.add_vertex(10);
+        graph3.add_vertex(20);
+        graph3.add_vertex(30);
+        graph3.add_edge(0, 1);
         
-        CHECK_EQUAL(NUM_VERTICES, g.vertex_count());
-        CHECK_EQUAL(NUM_VERTICES - 1, g.edge_count());
+        dg::Graph<int> graph4;
+        graph4.add_vertex(10);
+        graph4.add_vertex(20);
+        graph4.add_edge(1, 0);
         
-        for (size_t i = 0; i < NUM_VERTICES - 1; ++i) {
-            CHECK(g.contains_edge(vertices[i], vertices[i + 1]));
-        }
+        CHECK(graph1 == graph2);
+        CHECK(graph1 != graph3);
+        CHECK(graph1 != graph4);
+        CHECK(graph2 != graph3);
+        CHECK(graph2 != graph4);
+    }
+}
+
+SUITE(OutputTests) {
+    TEST(OutputOperator) {
+        dg::Graph<std::string> graph;
+        graph.add_vertex("A");
+        graph.add_vertex("B");
+        graph.add_vertex("C");
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        
+        std::ostringstream oss;
+        oss << graph;
+        
+        std::string output = oss.str();
+        CHECK(output.find("A -> B") != std::string::npos);
+        CHECK(output.find("B -> C") != std::string::npos);
     }
 
-    TEST(CompleteGraphSmall) {
-        Graph<int> g;
-        const size_t N = 5;
+    TEST(OutputEmptyGraph) {
+        dg::Graph<int> graph;
         
-        std::vector<size_t> vertices;
-        for (size_t i = 0; i < N; ++i) {
-            vertices.push_back(g.add_vertex(i));
+        std::ostringstream oss;
+        oss << graph;
+        
+        std::string output = oss.str();
+        CHECK(output.empty());
+    }
+
+    TEST(OutputWithCustomType) {
+        dg::Graph<City> graph;
+        graph.add_vertex(City("Moscow", 12000000));
+        graph.add_vertex(City("London", 9000000));
+        graph.add_edge(0, 1);
+        
+        std::ostringstream oss;
+        oss << graph;
+        
+        std::string output = oss.str();
+        CHECK(output.find("Moscow") != std::string::npos);
+        CHECK(output.find("London") != std::string::npos);
+    }
+}
+
+SUITE(ClearTests) {
+    TEST(ClearMethod) {
+        dg::Graph<int> graph;
+        graph.add_vertex(10);
+        graph.add_vertex(20);
+        graph.add_vertex(30);
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        graph.add_edge(0, 2);
+        
+        CHECK_EQUAL(3, graph.vertex_count());
+        CHECK_EQUAL(3, graph.edge_count());
+        
+        graph.clear();
+        
+        CHECK_EQUAL(0, graph.vertex_count());
+        CHECK_EQUAL(0, graph.edge_count());
+        CHECK(graph.empty());
+        
+        auto id = graph.add_vertex(100);
+        CHECK_EQUAL(0, id);
+        CHECK_EQUAL(1, graph.vertex_count());
+    }
+
+    TEST(ClearEmptyGraph) {
+        dg::Graph<int> graph;
+        
+        graph.clear();
+        
+        CHECK(graph.empty());
+        CHECK_EQUAL(0, graph.vertex_count());
+        CHECK_EQUAL(0, graph.edge_count());
+    }
+}
+
+SUITE(ComplexScenariosTests) {
+    TEST(CompleteGraph) {
+        dg::Graph<int> graph;
+        
+        const int n = 5;
+        for (int i = 0; i < n; ++i) {
+            graph.add_vertex(i);
         }
         
-        for (size_t i = 0; i < N; ++i) {
-            for (size_t j = 0; j < N; ++j) {
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
                 if (i != j) {
-                    g.add_edge(vertices[i], vertices[j]);
+                    graph.add_edge(i, j);
                 }
             }
         }
         
-        CHECK_EQUAL(N * (N - 1), g.edge_count());
+        CHECK_EQUAL(n, graph.vertex_count());
+        CHECK_EQUAL(n * (n - 1), graph.edge_count());
+        
+        for (int i = 0; i < n; ++i) {
+            CHECK_EQUAL(n - 1, graph.degree_vertex(i));
+            CHECK_EQUAL(n - 1, graph.in_degree(i));
+        }
     }
 
-    TEST(MultipleOperations) {
-        Graph<int> g;
+    TEST(CycleGraph) {
+        dg::Graph<int> graph;
         
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        auto v3 = g.add_vertex(3);
-        auto v4 = g.add_vertex(4);
+        const int n = 6;
+        for (int i = 0; i < n; ++i) {
+            graph.add_vertex(i * 10);
+        }
         
-        g.add_edge(v1, v2);
-        g.add_edge(v1, v3);
-        g.add_edge(v2, v4);
-        g.add_edge(v3, v4);
-        g.add_edge(v4, v1);
+        for (int i = 0; i < n; ++i) {
+            graph.add_edge(i, (i + 1) % n);
+        }
         
-        CHECK_EQUAL(4, g.vertex_count());
-        CHECK_EQUAL(5, g.edge_count());
+        CHECK_EQUAL(n, graph.vertex_count());
+        CHECK_EQUAL(n, graph.edge_count());
         
-        CHECK(g.contains_edge(v1, v2));
-        CHECK(g.contains_edge(v1, v3));
-        CHECK(g.contains_edge(v2, v4));
-        CHECK(g.contains_edge(v3, v4));
-        CHECK(g.contains_edge(v4, v1));
+        for (int i = 0; i < n; ++i) {
+            CHECK_EQUAL(1, graph.degree_vertex(i));
+            CHECK_EQUAL(1, graph.in_degree(i));
+        }
+    }
+}
+
+SUITE(CustomTypesTests) {
+    TEST(CityGraph) {
+        dg::Graph<City> graph;
         
-        Graph<int> g_copy = g;
-        CHECK_EQUAL(g.vertex_count(), g_copy.vertex_count());
-        CHECK_EQUAL(g.edge_count(), g_copy.edge_count());
-        CHECK(g_copy.contains_edge(v1, v2));
-        CHECK(g_copy.contains_edge(v4, v1));
+        auto moscow_id = graph.add_vertex(City("Moscow", 12000000));
+        auto london_id = graph.add_vertex(City("London", 9000000));
+        auto paris_id = graph.add_vertex(City("Paris", 7000000));
+        auto berlin_id = graph.add_vertex(City("Berlin", 6000000));
+        
+        graph.add_edge(moscow_id, london_id);
+        graph.add_edge(london_id, paris_id);
+        graph.add_edge(paris_id, berlin_id);
+        graph.add_edge(berlin_id, moscow_id);
+        graph.add_edge(moscow_id, paris_id);
+        
+        CHECK_EQUAL(4, graph.vertex_count());
+        CHECK_EQUAL(5, graph.edge_count());
+        
+        int total_population = 0;
+        for (auto it = graph.vertices_begin(); it != graph.vertices_end(); ++it) {
+            total_population += (*it).second.population;
+        }
+        CHECK_EQUAL(34000000, total_population);
+        
+        int adjacent_count = 0;
+        for (auto it = graph.adjacent_vertices_begin(moscow_id); 
+             it != graph.adjacent_vertices_end(moscow_id); ++it) {
+            adjacent_count++;
+        }
+        CHECK_EQUAL(2, adjacent_count);
     }
 
-    TEST(ClearAndReuse) {
-        Graph<int> g;
+    TEST(CourseGraph) {
+        dg::Graph<Course> graph;
         
-        auto v1 = g.add_vertex(1);
-        auto v2 = g.add_vertex(2);
-        g.add_edge(v1, v2);
+        auto math_id = graph.add_vertex(Course("Mathematics", 5));
+        auto physics_id = graph.add_vertex(Course("Physics", 4));
+        auto programming_id = graph.add_vertex(Course("Programming", 6));
+        auto algorithms_id = graph.add_vertex(Course("Algorithms", 5));
         
-        CHECK_EQUAL(2, g.vertex_count());
-        CHECK_EQUAL(1, g.edge_count());
+        graph.add_edge(math_id, physics_id);
+        graph.add_edge(physics_id, programming_id);
+        graph.add_edge(math_id, programming_id);
+        graph.add_edge(programming_id, algorithms_id);
         
-        g.clear();
+        CHECK_EQUAL(4, graph.vertex_count());
+        CHECK_EQUAL(4, graph.edge_count());
         
-        CHECK_EQUAL(0, g.vertex_count());
-        CHECK_EQUAL(0, g.edge_count());
+        int prerequisites_count = 0;
+        for (auto it = graph.in_edges_begin(programming_id); 
+             it != graph.in_edges_end(programming_id); ++it) {
+            prerequisites_count++;
+        }
+        CHECK_EQUAL(2, prerequisites_count);
         
-        auto v3 = g.add_vertex(3);
-        auto v4 = g.add_vertex(4);
-        auto v5 = g.add_vertex(5);
-        g.add_edge(v3, v4);
-        g.add_edge(v4, v5);
+        int total_credits = 0;
+        for (auto it = graph.vertices_begin(); it != graph.vertices_end(); ++it) {
+            total_credits += (*it).second.credits;
+        }
+        CHECK_EQUAL(20, total_credits);
+    }
+}
+
+SUITE(StressTests) {
+    TEST(MultipleAddRemove) {
+        dg::Graph<int> graph;
         
-        CHECK_EQUAL(3, g.vertex_count());
-        CHECK_EQUAL(2, g.edge_count());
-        CHECK(g.contains_edge(v3, v4));
-        CHECK(g.contains_edge(v4, v5));
+        for (int i = 0; i < 100; ++i) {
+            graph.add_vertex(i);
+        }
+        
+        CHECK_EQUAL(100, graph.vertex_count());
+        
+        for (int i = 0; i < 100; ++i) {
+            for (int j = i + 1; j < std::min(i + 5, 100); ++j) {
+                graph.add_edge(i, j);
+            }
+        }
+        
+        for (int i = 0; i < 100; i += 2) {
+            graph.remove_vertex(i);
+        }
+        
+        CHECK_EQUAL(100, graph.vertex_count());
+        
+        for (int i = 1; i < 100; i += 2) {
+            CHECK(graph.contains_vertex(i));
+        }
+        
+        for (int i = 0; i < 100; i += 2) {
+            CHECK(!graph.contains_vertex(i));
+        }
+    }
+
+    TEST(IteratorStability) {
+        dg::Graph<int> graph;
+        
+        for (int i = 0; i < 10; ++i) {
+            graph.add_vertex(i);
+        }
+        
+        for (int i = 0; i < 9; ++i) {
+            graph.add_edge(i, i + 1);
+        }
+        
+        std::size_t count_before = graph.edge_count();
+        auto it = graph.edges_begin();
+        while (it != graph.edges_end()) {
+            it = graph.remove_edge(it);
+        }
+        
+        CHECK_EQUAL(0, graph.edge_count());
+        CHECK_EQUAL(count_before, 9);
     }
 }
 
 int main() {
-    std::cout << "Running Graph Tests...\n";
-    int result = UnitTest::RunAllTests();
-    std::cout << "Tests completed.\n";
-    return result;
+    return UnitTest::RunAllTests();
 }
